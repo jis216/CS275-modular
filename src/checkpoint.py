@@ -35,7 +35,7 @@ def save_model(checkpoint_path, policy, total_timesteps, episode_num, num_sample
         'rb_ptr': {name: replay_buffer[name].ptr for name in replay_buffer},
         'rb_slicing_size': {name: replay_buffer[name].slicing_size for name in replay_buffer}
     }
-    fpath = os.path.join(checkpoint_path, f'model{episode_num}.pyth')
+    path = os.path.join(checkpoint_path, f'model_{(total_timesteps // 1e5) / 10}M.pyth')
     # (over)write the checkpoint
     torch.save(checkpoint, fpath)
     return fpath

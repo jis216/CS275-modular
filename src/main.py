@@ -100,7 +100,7 @@ def train(args):
     done_list = [True for i in range(num_envs_train)]
 
     # Start training ===========================================================
-    pbar = tqdm(total=args.max_timesteps, bar_format = "{desc}: {percentage:.2f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}")
+    pbar = tqdm(total=int(args.max_timesteps), bar_format = "{desc}: {percentage:.2f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}")
     while total_timesteps < args.max_timesteps:
 
         # train and log after one episode for each env
