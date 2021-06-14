@@ -11,6 +11,7 @@ from arguments import get_args
 from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
 import checkpoint as cp
 from config import *
+from tqdm import tqdm
 
 
 def train(args):
@@ -99,6 +100,7 @@ def train(args):
     done_list = [True for i in range(num_envs_train)]
 
     # Start training ===========================================================
+    pbar = tqdm(total=args.max_timesteps, bar_format = "{desc}: {percentage:.2f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}")
     while total_timesteps < args.max_timesteps:
 
         # train and log after one episode for each env
@@ -113,9 +115,9 @@ def train(args):
                     writer.add_scalar('{}_episode_reward'.format(envs_train_names[i]), episode_reward_list[i], total_timesteps)
                     writer.add_scalar('{}_episode_len'.format(envs_train_names[i]), episode_timesteps_list[i], total_timesteps)
                 # print to console
-                print("-" * 50 + "\nExpID: {}, FPS: {:.2f}, TotalT: {}, Progress: {:.2f}%, EpisodeNum: {}, SampleNum: {}, ReplayBSize: {}".format(
+                print("-" * 50 + "\nExpID: {}, FPS: {:.2f}, TotalT: {}, EpisodeNum: {}, SampleNum: {}, ReplayBSize: {}".format(
                         args.expID, this_training_timesteps / (time.time() - s),
-                        total_timesteps, total_timesteps / args.max_timesteps * 100, episode_num, num_samples,
+                        total_timesteps, episode_num, num_samples,
                         sum([len(replay_buffer[name].storage) for name in envs_train_names])))
                 for i in range(len(envs_train_names)):
                     print("{} === EpisodeT: {}, Reward: {:.2f}".format(envs_train_names[i],
@@ -189,6 +191,8 @@ def train(args):
             # insert transition in the replay buffer
             replay_buffer[envs_train_names[i]].add((obs, new_obs, action, reward_list[i], done_bool))
             num_samples += 1
+            
+            bar_time_start = total_timesteps
             # do not increment episode_timesteps if the sub-env has been 'done'
             if not done_list[i]:
                 episode_timesteps_list[i] += 1
@@ -196,6 +200,8 @@ def train(args):
                 this_training_timesteps += 1
                 timesteps_since_saving += 1
                 timesteps_since_saving_model_only += 1
+            
+            pbar.update(total_timesteps - bar_time_start)
 
         obs_list = new_obs_list
         collect_done = all(done_list)
@@ -204,6 +210,8 @@ def train(args):
     model_saved_path = cp.save_model(exp_path, policy, total_timesteps,
                                      episode_num, num_samples, replay_buffer,
                                      envs_train_names, args)
+
+    pbar.close()
     print("*** training finished and model saved to {} ***".format(model_saved_path))
 
 
