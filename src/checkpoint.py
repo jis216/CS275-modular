@@ -37,7 +37,7 @@ def save_model(checkpoint_path, policy, total_timesteps, episode_num, num_sample
     }
     path = os.path.join(checkpoint_path, f'model_{(total_timesteps // 1e5) / 10}M.pyth')
     # (over)write the checkpoint
-    torch.save(checkpoint, fpath)
+    torch.save(checkpoint, path)
     return fpath
 
 
