@@ -15,19 +15,17 @@ class TD3(object):
         self.actor = ActorGraphPolicy(args.limb_obs_size, 1,
                                       args.msg_dim, args.batch_size,
                                       args.max_action, args.max_children,
-                                      args.disable_fold, args.td, args.bu).to(device)
+                                      args.disable_fold).to(device)
         self.actor_target = ActorGraphPolicy(args.limb_obs_size, 1,
                                              args.msg_dim, args.batch_size,
                                              args.max_action, args.max_children,
-                                             args.disable_fold, args.td, args.bu).to(device)
+                                             args.disable_fold).to(device)
         self.critic = CriticGraphPolicy(args.limb_obs_size, 1,
                                         args.msg_dim, args.batch_size,
-                                        args.max_children, args.disable_fold,
-                                        args.td, args.bu).to(device)
+                                        args.max_children, args.disable_fold).to(device)
         self.critic_target = CriticGraphPolicy(args.limb_obs_size, 1,
                                                args.msg_dim, args.batch_size,
-                                               args.max_children, args.disable_fold,
-                                               args.td, args.bu).to(device)
+                                               args.max_children, args.disable_fold).to(device)
         self.actor_target.load_state_dict(self.actor.state_dict())
         self.critic_target.load_state_dict(self.critic.state_dict())
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=args.lr)

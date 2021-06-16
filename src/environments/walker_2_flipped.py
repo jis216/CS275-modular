@@ -43,6 +43,7 @@ class ModularEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             torso_x_pos = self.data.get_body_xpos('torso')[0]
             xpos = self.data.get_body_xpos(b)
             xpos[0] -= torso_x_pos
+            #print('xpos:', xpos)
             q = self.data.get_body_xquat(b)
             expmap = quat2expmap(q)
             obs = np.concatenate([xpos, np.clip(self.data.get_body_xvelp(b), -10, 10), \
@@ -52,7 +53,6 @@ class ModularEnv(mujoco_env.MujocoEnv, utils.EzPickle):
                 angle = 0.
                 joint_range = [0., 0.]
             else:
-
                 body_id = self.sim.model.body_name2id(b)
                 jnt_adr = self.sim.model.body_jntadr[body_id]
                 qpos_adr = self.sim.model.jnt_qposadr[jnt_adr] # assuming each body has only one joint

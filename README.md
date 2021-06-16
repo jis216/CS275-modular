@@ -48,54 +48,50 @@ If you find this work useful in your research, please cite using the following B
 | ------------- | ------------- |
 | ``--morphologies <List of STRING>``  | Find existing environments matching each keyword for training (e.g. walker, hopper, humanoid, and cheetah; see examples below)  |
 | ``--custom_xml <PATH>``  | Path to custom `xml` file for training the modular policy.<br> When ``<PATH>`` is a file, train with that `xml` morphology only. <br> When ``<PATH>`` is a directory, train on all `xml` morphologies found in the directory.
-| ``--td``  | Enable top-down message passing (pass ``--td --bu`` for both-way message passing)  |
-| ``--bu``  | Enable bottom-up message passing (pass ``--td --bu`` for both-way message passing)  |
 | ``--expID <INT>``  | Experiment ID for creating saving directory  |
-  | ``--seed <INT>``  | (Optional) Seed for Gym, PyTorch and Numpy  |
+| ``--seed <INT>``  | (Optional) Seed for Gym, PyTorch and Numpy  |
   
 ### Train with existing environment
 - Train both-way SMP on ``Walker++`` (12 variants of walker):
 ```Shell
-python main.py --expID 001 --td --bu --morphologies walker
+python main.py --expID 001 --morphologies walker
   ```
 - Train both-way SMP on ``Humanoid++`` (8 variants of 2d humanoid):
 ```Shell
-python main.py --expID 002 --td --bu --morphologies humanoid
+python main.py --expID 002 --morphologies humanoid
   ```
 - Train both-way SMP on ``Cheetah++`` (15 variants of cheetah):
 ```Shell
-python main.py --expID 003 --td --bu --morphologies cheetah
+python main.py --expID 003 --morphologies cheetah
   ```
 - Train both-way SMP on ``Hopper++`` (3 variants of hopper):
 ```Shell
-python main.py --expID 004 --td --bu --morphologies hopper
+python main.py --expID 004 --morphologies hopper
   ```
   - To train both-way SMP for only one environment (e.g. ``walker_7_main``), specify the full name of  the environment without the ``.xml`` suffix:
 ```Shell
-python main.py --expID 005 --td --bu --morphologies walker_7_main
+python main.py --expID 005 --morphologies walker_7_main
   ```
- To run with one-way message passing, disable ``--td`` for bottom-up-only message passing or disable ``--bu`` for top-down-only message passing.
- To run without any message passing, disable both ``--td`` and ``--bu``.
 
 ### Train with custom environment
 - Train both-way SMP for only one environment:
 ```Shell
-python main.py --expID 006 --td --bu --custom_xml <PATH_TO_XML_FILE>
+python main.py --expID 006 --custom_xml <PATH_TO_XML_FILE>
   ```
 - Train both-way SMP for multiple environments (``xml`` files must be in the same directory):
 ```Shell
-python main.py --expID 007 --td --bu --custom_xml <PATH_TO_XML_DIR>
+python main.py --expID 007 --custom_xml <PATH_TO_XML_DIR>
   ```
 Note that the current implementation assumes all custom MuJoCo agents are 2D planar and contain only one ``body`` tag with name ``torso`` attached to ``worldbody``.
 
 ### Visualization
 - To visualize all ``walker`` environments with the both-way SMP model from experiment ``expID 001``:
 ```Shell
-python visualize.py --expID 001 --td --bu --morphologies walker
+python visualize.py --expID 001 --morphologies walker
 ```
 - To visualize only ``walker_7_main`` environment with the both-way SMP model from experiment ``expID 001``:
 ```Shell
-python visualize.py --expID 001 --td --bu --morphologies walker_7_main
+python visualize.py --expID 001 --morphologies walker_7_main
 ```
 
 ## Provided Environments

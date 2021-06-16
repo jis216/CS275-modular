@@ -39,10 +39,6 @@ def get_args():
         help="maximum number of timesteps allowed in one episode")
     parser.add_argument("--save_freq", default=5e5, type=int,
         help="How often (time steps) we save the model and the replay buffer?")
-    parser.add_argument("--td", action="store_true",
-        help="enable top down message passing")
-    parser.add_argument("--bu", action="store_true",
-        help="enable bottom up message passing")
     parser.add_argument("--rb_max", type=int, default=10e6,
         help="maximum replay buffer size across all morphologies")
     parser.add_argument("--max_children", type=int, default=None,

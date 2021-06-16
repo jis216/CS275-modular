@@ -155,8 +155,9 @@ def getGraphStructure(xml_file):
     def preorder(b, parent_idx=-1):
         self_idx = len(parents)
         parents.append(parent_idx)
-        if 'body' not in b:
+        if 'body' not in b: # leaf, no children
             return
+        # turn single branch to list of single element
         if not isinstance(b['body'], list):
             b['body'] = [b['body']]
         for branch in b['body']:
