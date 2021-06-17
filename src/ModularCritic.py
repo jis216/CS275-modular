@@ -343,8 +343,9 @@ class CriticGraphPolicy(nn.Module):
         self_children_idx = self.parents[:node].count(self.parents[node])
 
         # if the structure is flipped, flip message order at the root
-        if self.parents[0] == -2 and node == 1:
-            self_children_idx = (self.max_children - 1) - self_children_idx
+        if self.parents[0] == -2 and (node == 1 or node == 4):
+            real_children_num = 2
+            self_children_idx = (real_children_num - 1) - self_children_idx
 
         if not self.disable_fold:
             msg_in = self.fold.add('get_{}'.format(self_children_idx), parent_msg)
