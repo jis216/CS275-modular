@@ -17,3 +17,4 @@ src/temp.txt
 src/*.pem
 .idea
 **.ipynb
+.vscode/
