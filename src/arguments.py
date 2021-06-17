@@ -33,6 +33,8 @@ def get_args():
         help='message dimension when trained modularly with message passing')
     parser.add_argument('--disable_fold', action="store_true",
         help='disable the use of pytorch fold (used for accelerating training)')
+    parser.add_argument('--use_att', action="store_true",
+        help='enable policy network with attention')
     parser.add_argument('--lr', default=0.0005, type=float,
         help='learning rate for Adam')
     parser.add_argument("--max_episode_steps", type=int, default=1000,

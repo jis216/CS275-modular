@@ -2,14 +2,19 @@
 from __future__ import print_function
 import torch
 import torch.nn.functional as F
-from ModularActor import ActorGraphPolicy
-from ModularCritic import CriticGraphPolicy
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
 class TD3(object):
 
     def __init__(self, args):
+        if args.use_att:
+            from AttModularActor import ActorGraphPolicy
+            from AttModularCritic import CriticGraphPolicy
+        else:
+            from ModularActor import ActorGraphPolicy
+            from ModularCritic import CriticGraphPolicy
 
         self.args = args
         self.actor = ActorGraphPolicy(args.limb_obs_size, 1,
