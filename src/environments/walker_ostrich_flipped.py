@@ -22,35 +22,35 @@ class ModularEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         reward = (posafter - posbefore) / self.dt
         reward += alive_bonus
         reward -= 1e-3 * np.square(a).sum()
-        done = False
+
+        done = not (torso_height > 0.8 and torso_height < 2.0 and
+                    torso_ang > -1.0 and torso_ang < 1.0 and
+                    self.data.site_xpos[0, 2] > 1.1)
+        
         ob = self._get_obs()
         return ob, reward, done, {}
 
     def _get_obs(self):
-        '''
-        Mujoco observations
-
-        mjtNum*   xpos;                 // Cartesian position of body frame         (nbody x 3)
-        mjtNum*   xquat;                // Cartesian orientation of body frame      (nbody x 4)
-        mjtNum*   xmat;                 // Cartesian orientation of body frame      (nbody x 9)
-        mjtNum*   xipos;                // Cartesian position of body com           (nbody x 3)
-        mjtNum*   ximat;                // Cartesian orientation of body inertia    (nbody x 9)
-        mjtNum*   xanchor;              // Cartesian position of joint anchor       (njnt x 3)
-        mjtNum*   xaxis;                // Cartesian joint axis                     (njnt x 3)
-
-        mjtNum*   qpos;                 // position                                 (nq x 1)
-        mjtNum*   qvel;                 // velocity                                 (nv x 1)
-        '''
         
         def _get_obs_per_limb(b):
+            if b == 'torso':
+                limb_type_vec = np.array((1, 0, 0, 0))
+            elif 'thigh' in b:
+                limb_type_vec = np.array((0, 1, 0, 0))
+            elif 'leg' in b:
+                limb_type_vec = np.array((0, 0, 1, 0))
+            elif 'foot' in b:
+                limb_type_vec = np.array((0, 0, 0, 1))
+            else:
+                limb_type_vec = np.array((0, 0, 0, 0))
             torso_x_pos = self.data.get_body_xpos('torso')[0]
             xpos = self.data.get_body_xpos(b)
             xpos[0] -= torso_x_pos
             q = self.data.get_body_xquat(b)
             expmap = quat2expmap(q)
-            # [global position, positional velocity, rotational velocity, 3D rotations]
+
             obs = np.concatenate([xpos, np.clip(self.data.get_body_xvelp(b), -10, 10), \
-                self.data.get_body_xvelr(b), expmap])
+                self.data.get_body_xvelr(b), expmap, limb_type_vec])
             # include current joint angle and joint range as input
             if b == 'torso':
                 angle = 0.
@@ -58,18 +58,15 @@ class ModularEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             else:
                 body_id = self.sim.model.body_name2id(b)
 
-                # body_jntadr = start addr of joints; -1: no joints      (nbody x 1)
                 jnt_adr = self.sim.model.body_jntadr[body_id]
-                #jnt_qposadr = start addr in 'qpos' for joint's data
                 qpos_adr = self.sim.model.jnt_qposadr[jnt_adr] # assuming each body has only one joint
                 angle = np.degrees(self.data.qpos[qpos_adr]) # angle of current joint, scalar
-                #mjtNum*   jnt_range      // joint limits (njnt x 2)
                 joint_range = np.degrees(self.sim.model.jnt_range[jnt_adr]) # range of current joint, (2,)
                 # normalize
                 angle = (angle - joint_range[0]) / (joint_range[1] - joint_range[0])
                 joint_range[0] = (180. + joint_range[0]) / 360.
                 joint_range[1] = (180. + joint_range[1]) / 360.
-            #[angle, joint angle range]
+
             obs = np.concatenate([obs, [angle], joint_range])
             return obs
 

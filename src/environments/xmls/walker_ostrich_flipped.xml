@@ -18,17 +18,6 @@
       
       <geom friction="0.9" fromto="-0.2 0 1.0 0.1 0 1.1" name="torso_geom" size="0.05" type="capsule" density='300'/>
 
-      <body name="tail" pos="-0.2 0 1.0">
-        <joint axis="0 -1 0" name="tailjoint" pos="-0.2 0 1.0" range="-50 50" type="hinge"/>
-        <geom friction="0.9" fromto="-0.2 0 1.0 -0.5 0 1.0" name="tailgeom" size="0.05" type="capsule" density='500'/>
-      </body>
-      <body name="headbody" pos="0.1 0 1.1">
-        <joint axis="0 -1 0" name="neckjoint" pos="0.1 0 1.1" range="-50 50" type="hinge"/>
-        <geom friction="0.9" fromto="0.1 0 1.1 0.2 0 1.55" name="neck" size="0.05" type="capsule" density='200'/>
-        <geom friction="0.9" fromto="0.2 0 1.55 0.3 0 1.45" name="head" size="0.05" type="capsule" density='200'/>
-        <site name="head" pos="0.2 0 1.55" size="0.08 0.08" rgba="0.8 0.6 .4 1"/>
-      </body>
-      
       <body name="thigh_1" pos="0 0 1.05">
         <joint axis="0 -1 0" name="thighjoint_1" pos="0 0 1.05" range="-50 50" type="hinge"/>
         <geom friction="0.9" fromto="0 0 1.05 0 0 0.6" name="thighgeom_1" size="0.05" type="capsule"/>
@@ -53,6 +42,18 @@
             <geom friction="2.0" fromto="-0.13 0 0.1 0.26 0 0.1" name="footgeom_2" size="0.06" type="capsule"/>
           </body>
         </body>
+      </body>
+
+      <body name="tail" pos="-0.2 0 1.0">
+        <joint axis="0 -1 0" name="tailjoint" pos="-0.2 0 1.0" range="-50 50" type="hinge"/>
+        <geom friction="0.9" fromto="-0.2 0 1.0 -0.5 0 1.0" name="tailgeom" size="0.05" type="capsule" density='500'/>
+      </body>
+      
+      <body name="headbody" pos="0.1 0 1.1">
+        <joint axis="0 -1 0" name="neckjoint" pos="0.1 0 1.1" range="-50 50" type="hinge"/>
+        <geom friction="0.9" fromto="0.1 0 1.1 0.2 0 1.55" name="neck" size="0.05" type="capsule" density='200'/>
+        <geom friction="0.9" fromto="0.2 0 1.55 0.3 0 1.45" name="head" size="0.05" type="capsule" density='200'/>
+        <site name="head" pos="0.2 0 1.55" size="0.08 0.08" rgba="0.8 0.6 .4 1"/>
       </body>
 
     </body>
