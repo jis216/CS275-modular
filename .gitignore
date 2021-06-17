@@ -14,5 +14,6 @@ src/results
 src/runs
 src/pytorch_models
 src/temp.txt
+src/*.pem
 .idea
 **.ipynb
