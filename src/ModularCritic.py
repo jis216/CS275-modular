@@ -7,25 +7,6 @@ import torchfold
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-class CriticVanilla(nn.Module):
-    """a vanilla critic module that outputs a node's q-values given only its observation and action(no message between nodes)"""
-    def __init__(self, state_dim, action_dim):
-        super(CriticVanilla, self).__init__()
-        self.baseQ1 = MLPBase(state_dim + action_dim, 1)
-        self.baseQ2 = MLPBase(state_dim + action_dim, 1)
-
-    def forward(self, x, u):
-        xu = torch.cat([x, u], -1)
-        x1 = self.baseQ1(xu)
-        x2 = self.baseQ2(xu)
-        return x1, x2
-
-    def Q1(self, x, u):
-        xu = torch.cat([x, u], -1)
-        x1 = self.baseQ1(xu)
-        return x1
-
-
 class CriticUp(nn.Module):
     """a bottom-up module used in bothway message passing that only passes message to its parent"""
     def __init__(self, state_dim, action_dim, msg_dim, max_children):
@@ -48,55 +29,6 @@ class CriticUp(nn.Module):
         msg_up = xum
 
         return msg_up
-
-
-class CriticUpAction(nn.Module):
-    """a bottom-up module used in bottom-up-only message passing that passes message to its parent and outputs q-values"""
-    def __init__(self, state_dim, action_dim, msg_dim, max_children):
-        super(CriticUpAction, self).__init__()
-        self.fc1 = nn.Linear(state_dim + action_dim, 64)
-        self.fc2 = nn.Linear(64 + msg_dim * max_children, 64)
-        self.fc3 = nn.Linear(64, msg_dim)
-        self.baseQ1 = MLPBase(state_dim + action_dim + msg_dim * max_children, 1)
-        self.baseQ2 = MLPBase(state_dim + action_dim + msg_dim * max_children, 1)
-
-    def forward(self, x, u, *m):
-        m = torch.cat(m, dim=-1)
-        xum = torch.cat([x, u, m], dim=-1)
-
-        x1 = self.baseQ1(xum)
-        x2 = self.baseQ2(xum)
-
-        xu = torch.cat([x, u], dim=-1)
-        xu = self.fc1(xu)
-        xu = F.normalize(xu, dim=-1)
-        xum = torch.cat([xu, m], dim=-1)
-        xum = torch.tanh(xum)
-        xum = self.fc2(xum)
-        xum = torch.tanh(xum)
-        xum = self.fc3(xum)
-        xum = F.normalize(xum, dim=-1)
-        msg_up = xum
-
-        return msg_up, x1, x2
-
-    def Q1(self, x, u, *m):
-        m = torch.cat(m, dim=-1)
-        xum = torch.cat([x, u, m], dim=-1)
-        x1 = self.baseQ1(xum)
-
-        xu = torch.cat([x, u], dim=-1)
-        xu = self.fc1(xu)
-        xu = F.normalize(xu, dim=-1)
-        xum = torch.cat([xu, m], dim=-1)
-        xum = torch.tanh(xum)
-        xum = self.fc2(xum)
-        xum = torch.tanh(xum)
-        xum = self.fc3(xum)
-        xum = F.normalize(xum, dim=-1)
-        msg_up = xum
-
-        return msg_up, x1
 
 
 class CriticDownAction(nn.Module):
@@ -150,36 +82,14 @@ class CriticGraphPolicy(nn.Module):
         self.action_dim = action_dim
 
         assert self.action_dim == 1
-        self.td = td
-        self.bu = bu
-        if self.bu:
-            # bottom-up then top-down
-            if self.td:
-                self.sNet = nn.ModuleList([CriticUp(state_dim, action_dim, msg_dim, max_children)] * self.num_limbs).to(device)
-            # bottom-up only
-            else:
-                self.sNet = nn.ModuleList([CriticUpAction(state_dim, action_dim, msg_dim, max_children)] * self.num_limbs).to(device)
-            if not self.disable_fold:
-                for i in range(self.num_limbs):
-                    setattr(self, "sNet" + str(i).zfill(3), self.sNet[i])
+        
+        self.sNet = nn.ModuleList([CriticUp(state_dim, action_dim, msg_dim, max_children)] * self.num_limbs).to(device)
+        if not self.disable_fold:
+            for i in range(self.num_limbs):
+                setattr(self, "sNet" + str(i).zfill(3), self.sNet[i])
+        
         # we pass msg_dim as first argument because in both-way message-passing, each node takes in its passed-up message as 'state'
-        if self.td:
-            # bottom-up then top-down
-            if self.bu:
-                self.critic = nn.ModuleList([CriticDownAction(msg_dim, action_dim, msg_dim, max_children)] * self.num_limbs).to(device)
-            # top-down only
-            else:
-                self.critic = nn.ModuleList([CriticDownAction(state_dim, action_dim, msg_dim, max_children)] * self.num_limbs).to(device)
-            if not self.disable_fold:
-                for i in range(self.num_limbs):
-                    setattr(self, "critic" + str(i).zfill(3), self.critic[i])
-
-        # no message passing
-        if not self.bu and not self.td:
-            self.critic = nn.ModuleList([CriticVanilla(state_dim, action_dim)] * self.num_limbs).to(device)
-            if not self.disable_fold:
-                for i in range(self.num_limbs):
-                    setattr(self, "critic" + str(i).zfill(3), self.critic[i])
+        self.critic = nn.ModuleList([CriticDownAction(msg_dim, action_dim, msg_dim, max_children)] * self.num_limbs).to(device)
 
         if not self.disable_fold:
             for i in range(self.max_children):
@@ -202,30 +112,17 @@ class CriticGraphPolicy(nn.Module):
                 self.input_state[i] = torch.unsqueeze(self.input_state[i], 0)
                 self.input_action[i] = torch.unsqueeze(self.input_action[i], 0)
 
-        if self.bu:
-            # bottom up transmission by recursion
-            for i in range(self.num_limbs):
-                self.bottom_up_transmission(i)
+        # bottom up transmission by recursion
+        for i in range(self.num_limbs):
+            self.bottom_up_transmission(i)
 
-        if self.td:
-            # top down transmission by recursion
-            for i in range(self.num_limbs):
-                self.top_down_transmission(i)
-
-        if not self.bu and not self.td:
-            for i in range(self.num_limbs):
-                if not self.disable_fold:
-                    self.x1[i], self.x2[i] = self.fold.add('critic' + str(0).zfill(3), self.input_state[i], self.input_action[i]).split(2)
-                else:
-                    self.x1[i], self.x2[i] = self.critic[i](self.input_state[i], self.input_action[i])
+        # top down transmission by recursion
+        for i in range(self.num_limbs):
+            self.top_down_transmission(i)
 
         if not self.disable_fold:
-            if self.bu and not self.td:
-                self.x1_fold = self.x1_fold + [self.x1]
-                self.x2_fold = self.x2_fold + [self.x2]
-            else:
-                self.x1_fold = self.x1_fold + self.x1
-                self.x2_fold = self.x2_fold + self.x2
+            self.x1_fold = self.x1_fold + self.x1
+            self.x2_fold = self.x2_fold + self.x2
             self.x1, self.x2 = self.fold.apply(self, [self.x1_fold, self.x2_fold])
             self.x1 = torch.transpose(self.x1, 0, 1)
             self.x2 = torch.transpose(self.x2, 0, 1)
@@ -253,30 +150,17 @@ class CriticGraphPolicy(nn.Module):
                 self.input_state[i] = torch.unsqueeze(self.input_state[i], 0)
                 self.input_action[i] = torch.unsqueeze(self.input_action[i], 0)
 
-        if self.bu:
-            # bottom up transmission by recursion
-            for i in range(self.num_limbs):
-                self.bottom_up_transmission(i)
+        # bottom up transmission by recursion
+        for i in range(self.num_limbs):
+            self.bottom_up_transmission(i)
 
-        if self.td:
-            # top down transmission by recursion
-            for i in range(self.num_limbs):
-                self.top_down_transmission(i)
-
-        if not self.bu and not self.td:
-            for i in range(self.num_limbs):
-                if not self.disable_fold:
-                    self.x1[i] = self.fold.add('critic' + str(0).zfill(3), self.input_state[i], self.input_action[i])
-                else:
-                    self.x1[i] = self.critic[i](self.input_state[i], self.input_action[i])
+        # top down transmission by recursion
+        for i in range(self.num_limbs):
+            self.top_down_transmission(i)
 
         if not self.disable_fold:
-            if self.bu and not self.td:
-                self.x1 = [self.x1]
             self.x1_fold = self.x1_fold + self.x1
             self.x1 = self.fold.apply(self, [self.x1_fold])[0]
-            if not self.bu and not self.td:
-                self.x1 = self.x1[0]
             self.x1 = torch.transpose(self.x1, 0, 1)
             self.fold = None
         else:
@@ -306,15 +190,9 @@ class CriticGraphPolicy(nn.Module):
             msg_in[i] = self.bottom_up_transmission(children[i])
 
         if not self.disable_fold:
-            if self.td:
-                self.msg_up[node] = self.fold.add('sNet' + str(0).zfill(3), state, action, *msg_in)
-            else:
-                self.msg_up[node], self.x1, self.x2 = self.fold.add('sNet' + str(0).zfill(3), state, action, *msg_in).split(3)
+            self.msg_up[node] = self.fold.add('sNet' + str(0).zfill(3), state, action, *msg_in)
         else:
-            if self.td:
-                self.msg_up[node] = self.sNet[node](state, action, *msg_in)
-            else:
-                self.msg_up[node], self.x1, self.x2 = self.sNet[node](state, action, *msg_in)
+            self.msg_up[node] = self.sNet[node](state, action, *msg_in)
 
         return self.msg_up[node]
 
@@ -330,10 +208,7 @@ class CriticGraphPolicy(nn.Module):
             return self.msg_down[node]
 
         # in both-way message-passing, each node takes in its passed-up message as 'state'
-        if self.bu:
-            state = self.msg_up[node]
-        else:
-            state = self.input_state[node]
+        state = self.msg_up[node]
 
         action = self.input_action[node]
         parent_msg = self.top_down_transmission(self.parents[node])
@@ -387,25 +262,16 @@ class CriticGraphPolicy(nn.Module):
 
     def change_morphology(self, parents):
         if not self.disable_fold:
-            if self.bu:
-                for i in range(1, self.num_limbs):
-                    delattr(self, "sNet" + str(i).zfill(3))
-            if not (self.bu and not self.td):
-                for i in range(1, self.num_limbs):
-                    delattr(self, "critic" + str(i).zfill(3))
+            for i in range(1, self.num_limbs):
+                delattr(self, "sNet" + str(i).zfill(3))
+                    
         self.parents = parents
         self.num_limbs = len(parents)
         self.msg_down = [None] * self.num_limbs
         self.msg_up = [None] * self.num_limbs
         self.action = [None] * self.num_limbs
         self.input_state = [None] * self.num_limbs
-        if self.bu:
-            self.sNet = nn.ModuleList([self.sNet[0]] * self.num_limbs)
-            if not self.disable_fold:
-                for i in range(self.num_limbs):
-                    setattr(self, "sNet" + str(i).zfill(3), self.sNet[i])
-        if not (self.bu and not self.td):
-            self.critic = nn.ModuleList([self.critic[0]] * self.num_limbs)
-            if not self.disable_fold:
-                for i in range(self.num_limbs):
-                    setattr(self, "critic" + str(i).zfill(3), self.critic[i])
+        self.sNet = nn.ModuleList([self.sNet[0]] * self.num_limbs)
+        if not self.disable_fold:
+            for i in range(self.num_limbs):
+                setattr(self, "sNet" + str(i).zfill(3), self.sNet[i])

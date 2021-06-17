@@ -108,36 +108,18 @@ class ActorGraphPolicy(nn.Module):
         self.action_dim = action_dim
 
         assert self.action_dim == 1
-        self.td = td
-        self.bu = bu
-        if self.bu:
-            # bottom-up then top-down
-            if self.td:
-                self.sNet = nn.ModuleList([ActorUp(state_dim, msg_dim, max_children)] * self.num_limbs).to(device)
-            # bottom-up only
-            else:
-                self.sNet = nn.ModuleList([ActorUpAction(state_dim, msg_dim, max_children, action_dim, max_action)] * self.num_limbs).to(device)
-            if not self.disable_fold:
-                for i in range(self.num_limbs):
-                    setattr(self, "sNet" + str(i).zfill(3), self.sNet[i])
-        # we pass msg_dim as first argument because in both-way message-passing, each node takes in its passed-up message as 'state'
-        if self.td:
-            # bottom-up then top-down
-            if self.bu:
-                self.actor = nn.ModuleList([ActorDownAction(msg_dim, action_dim, msg_dim, max_action, max_children)] * self.num_limbs).to(device)
-            # top-down only
-            else:
-                self.actor = nn.ModuleList([ActorDownAction(state_dim, action_dim, msg_dim, max_action, max_children)] * self.num_limbs).to(device)
-            if not self.disable_fold:
-                for i in range(self.num_limbs):
-                    setattr(self, "actor" + str(i).zfill(3), self.actor[i])
+        
+        self.sNet = nn.ModuleList([ActorUp(state_dim, msg_dim, max_children)] * self.num_limbs).to(device)
 
-        # no message passing
-        if not self.bu and not self.td:
-            self.actor = nn.ModuleList([ActorVanilla(state_dim, action_dim, max_action)] * self.num_limbs).to(device)
-            if not self.disable_fold:
-                for i in range(self.num_limbs):
-                    setattr(self, "actor" + str(i).zfill(3), self.actor[i])
+        if not self.disable_fold:
+            for i in range(self.num_limbs):
+                setattr(self, "sNet" + str(i).zfill(3), self.sNet[i])
+        # we pass msg_dim as first argument because in both-way message-passing, each node takes in its passed-up message as 'state'
+        self.actor = nn.ModuleList([ActorDownAction(msg_dim, action_dim, msg_dim, max_action, max_children)] * self.num_limbs).to(device)
+            
+        if not self.disable_fold:
+            for i in range(self.num_limbs):
+                setattr(self, "actor" + str(i).zfill(3), self.actor[i])
 
         if not self.disable_fold:
             for i in range(self.max_children):
@@ -161,22 +143,13 @@ class ActorGraphPolicy(nn.Module):
             if not self.disable_fold:
                 self.input_state[i] = torch.unsqueeze(self.input_state[i], 0)
 
-        if self.bu:
-            # bottom up transmission by recursion
-            for i in range(self.num_limbs):
-                self.bottom_up_transmission(i)
+        # bottom up transmission by recursion
+        for i in range(self.num_limbs):
+            self.bottom_up_transmission(i)
 
-        if self.td:
-            # top down transmission by recursion
-            for i in range(self.num_limbs):
-                self.top_down_transmission(i)
-
-        if not self.bu and not self.td:
-            for i in range(self.num_limbs):
-                if not self.disable_fold:
-                    self.action[i] = self.fold.add('actor' + str(0).zfill(3), self.input_state[i])
-                else:
-                    self.action[i] = self.actor[i](self.input_state[i])
+        # top down transmission by recursion
+        for i in range(self.num_limbs):
+            self.top_down_transmission(i)
 
         if not self.disable_fold:
             self.a += self.action
@@ -213,15 +186,9 @@ class ActorGraphPolicy(nn.Module):
             msg_in[i] = self.bottom_up_transmission(children[i])
 
         if not self.disable_fold:
-            if self.td:
-                self.msg_up[node] = self.fold.add('sNet' + str(0).zfill(3), state, *msg_in)
-            else:
-                self.msg_up[node], self.action[node] = self.fold.add('sNet' + str(0).zfill(3), state, *msg_in).split(2)
+            self.msg_up[node] = self.fold.add('sNet' + str(0).zfill(3), state, *msg_in)
         else:
-            if self.td:
-                self.msg_up[node] = self.sNet[node](state, *msg_in)
-            else:
-                self.msg_up[node], self.action[node] = self.sNet[node](state, *msg_in)
+            self.msg_up[node] = self.sNet[node](state, *msg_in)
 
         return self.msg_up[node]
 
@@ -236,10 +203,7 @@ class ActorGraphPolicy(nn.Module):
             return self.msg_down[node]
 
         # in both-way message-passing, each node takes in its passed-up message as 'state'
-        if self.bu:
-            state = self.msg_up[node]
-        else:
-            state = self.input_state[node]
+        state = self.msg_up[node]
         parent_msg = self.top_down_transmission(self.parents[node])
 
         # find self children index (first child of parent, second child of parent, etc)
@@ -289,25 +253,16 @@ class ActorGraphPolicy(nn.Module):
 
     def change_morphology(self, parents):
         if not self.disable_fold:
-            if self.bu:
-                for i in range(1, self.num_limbs):
-                    delattr(self, "sNet" + str(i).zfill(3))
-            if not (self.bu and not self.td):
-                for i in range(1, self.num_limbs):
-                    delattr(self, "actor" + str(i).zfill(3))
+            for i in range(1, self.num_limbs):
+                delattr(self, "sNet" + str(i).zfill(3))
+                    
         self.parents = parents
         self.num_limbs = len(parents)
         self.msg_down = [None] * self.num_limbs
         self.msg_up = [None] * self.num_limbs
         self.action = [None] * self.num_limbs
         self.input_state = [None] * self.num_limbs
-        if self.bu:
-            self.sNet = nn.ModuleList([self.sNet[0]] * self.num_limbs)
-            if not self.disable_fold:
-                for i in range(self.num_limbs):
-                    setattr(self, "sNet" + str(i).zfill(3), self.sNet[i])
-        if not (self.bu and not self.td):
-            self.actor = nn.ModuleList([self.actor[0]] * self.num_limbs)
-            if not self.disable_fold:
-                for i in range(self.num_limbs):
-                    setattr(self, "actor" + str(i).zfill(3), self.actor[i])
+        self.sNet = nn.ModuleList([self.sNet[0]] * self.num_limbs)
+        if not self.disable_fold:
+            for i in range(self.num_limbs):
+                setattr(self, "sNet" + str(i).zfill(3), self.sNet[i])
