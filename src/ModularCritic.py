@@ -6,20 +6,33 @@ from utils import MLPBase
 import torchfold
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+def relative_pos_encoding(children_pos, cur_pos):
+    relative_pos = children_pos - cur_pos
+    relative_dis = torch.abs(relative_pos)
+    relative_feature = torch.cat([relative_dis, relative_pos, cur_pos, children_pos], dim=-1)
+    return relative_feature
+
 
 class CriticUp(nn.Module):
     """a bottom-up module used in bothway message passing that only passes message to its parent"""
-    def __init__(self, state_dim, action_dim, msg_dim, max_children):
+    def __init__(self, state_dim, action_dim, msg_dim):
         super(CriticUp, self).__init__()
-        self.fc1 = nn.Linear(state_dim + action_dim, 64)
-        self.fc2 = nn.Linear(64 + msg_dim * max_children, 64)
-        self.fc3 = nn.Linear(64, msg_dim)
 
-    def forward(self, x, u, *m):
-        m = torch.cat(m, dim=-1)
+        self.fc1 = nn.Linear(state_dim + action_dim, 64) # tgt node input message
+        self.fc2 = nn.Linear(64 + msg_dim, 64) # (tgt, src nodes) message
+        self.fc3 = nn.Linear(64, msg_dim) # output
+        self.att_linear = nn.Linear(9 + state_dim, msg_dim)
+
+    def forward(self, x, u, children_states, *m):
         xu = torch.cat([x, u], dim=-1)
         xu = self.fc1(xu)
         xu = F.normalize(xu, dim=-1)
+
+        att = F.softmax(self.att_linear(children_states), dim=-2)
+        m = torch.cat(m, dim=-1)
+        m = m.view((*children_states.shape[:-1], -1))
+        m = (m * att).sum(dim=-2)
+
         xum = torch.cat([xu, m], dim=-1)
         xum = torch.tanh(xum)
         xum = self.fc2(xum)
@@ -37,25 +50,25 @@ class CriticDownAction(nn.Module):
     # if using bottom up and then top down, it is the node's outgoing message dim
     def __init__(self, self_input_dim, action_dim, msg_dim, max_children):
         super(CriticDownAction, self).__init__()
-        self.baseQ1 = MLPBase(self_input_dim + action_dim + msg_dim, 1)
-        self.baseQ2 = MLPBase(self_input_dim + action_dim + msg_dim, 1)
-        self.msg_base = MLPBase(self_input_dim + msg_dim, msg_dim * max_children)
+        self.baseQ1 = MLPBase(12 + self_input_dim + action_dim + msg_dim, 1)
+        self.baseQ2 = MLPBase(12 + self_input_dim + action_dim + msg_dim, 1)
+        self.msg_base = MLPBase(12 + self_input_dim + msg_dim, msg_dim * max_children)
 
-    def forward(self, x, u, m):
-        xum = torch.cat([x, u, m], dim=-1)
+    def forward(self, rel_pos, x, u, m):
+        xum = torch.cat([rel_pos, x, u, m], dim=-1)
         x1 = self.baseQ1(xum)
         x2 = self.baseQ2(xum)
-        xm = torch.cat([x, m], dim=-1)
+        xm = torch.cat([rel_pos, x, m], dim=-1)
         xm = torch.tanh(xm)
         msg_down = self.msg_base(xm)
         msg_down = F.normalize(msg_down, dim=-1)
 
         return x1, x2, msg_down
 
-    def Q1(self, x, u, m):
-        xum = torch.cat([x, u, m], dim=-1)
+    def Q1(self, rel_pos, x, u, m):
+        xum = torch.cat([rel_pos, x, u, m], dim=-1)
         x1 = self.baseQ1(xum)
-        xm = torch.cat([x, m], dim=-1)
+        xm = torch.cat([rel_pos, x, m], dim=-1)
         xm = torch.tanh(xm)
         msg_down = self.msg_base(xm)
         msg_down = F.normalize(msg_down, dim=-1)
@@ -84,7 +97,7 @@ class CriticGraphPolicy(nn.Module):
         assert self.action_dim == 1
         
         # bottom-up then top-down
-        self.sNet = nn.ModuleList([CriticUp(state_dim, action_dim, msg_dim, max_children)] * self.num_limbs).to(device)
+        self.sNet = nn.ModuleList([CriticUp(state_dim, action_dim, msg_dim)] * self.num_limbs).to(device)
         if not self.disable_fold:
             for i in range(self.num_limbs):
                 setattr(self, "sNet" + str(i).zfill(3), self.sNet[i])
@@ -186,17 +199,35 @@ class CriticGraphPolicy(nn.Module):
         state = self.input_state[node]
         action = self.input_action[node]
 
+        cur_pos, _ = state.split([3, state.shape[-1] - 3], dim=-1)
+
         children = [i for i, x in enumerate(self.parents) if x == node]
         assert (self.max_children - len(children)) >= 0
         children += [-1] * (self.max_children - len(children))
         msg_in = [None] * self.max_children
+        children_states = [None] * self.max_children
+
         for i in range(self.max_children):
+            # children[i] = children node idx
+            if children[i] == -1:
+                children_states[i] = torch.zeros((*cur_pos.shape[:-1], 9 + state.shape[-1])).to(device)
+            else:
+                child_state = self.input_state[children[i]]
+                children_pos, children_f  = child_state.split([3, child_state.shape[-1] - 3], dim=-1)
+
+                rel_pos = relative_pos_encoding(children_pos, cur_pos)
+
+                children_states[i] = torch.cat((rel_pos, children_f), dim=-1)
+
             msg_in[i] = self.bottom_up_transmission(children[i])
 
+        children_states = torch.cat(children_states, dim=-1)
+        children_states = children_states.view(*children_states.shape[:-1], self.max_children, -1)
+
         if not self.disable_fold:
-            self.msg_up[node] = self.fold.add('sNet' + str(0).zfill(3), state, action, *msg_in)
+            self.msg_up[node] = self.fold.add('sNet' + str(0).zfill(3), state, action, children_states, *msg_in)
         else:
-            self.msg_up[node] = self.sNet[node](state, action, *msg_in)
+            self.msg_up[node] = self.sNet[node](state, action, children_states, *msg_in)
 
         return self.msg_up[node]
 
@@ -210,6 +241,13 @@ class CriticGraphPolicy(nn.Module):
 
         elif self.msg_down[node] is not None:
             return self.msg_down[node]
+
+        child_state = self.input_state[node]
+        children_pos, _  = child_state.split([3, child_state.shape[-1] - 3], dim=-1)
+        parent_state = self.input_state[self.parents[node]]
+        parent_pos, _  = parent_state.split([3, parent_state.shape[-1] - 3], dim=-1)
+
+        rel_pos = relative_pos_encoding(children_pos, parent_pos)
 
         # in both-way message-passing, each node takes in its passed-up message as 'state'
         state = self.msg_up[node]
@@ -231,9 +269,9 @@ class CriticGraphPolicy(nn.Module):
             msg_in = self.msg_slice(parent_msg, self_children_idx)
 
         if not self.disable_fold:
-            self.x1[node], self.x2[node], self.msg_down[node] = self.fold.add('critic' + str(0).zfill(3), state, action, msg_in).split(3)
+            self.x1[node], self.x2[node], self.msg_down[node] = self.fold.add('critic' + str(0).zfill(3), rel_pos, state, action, msg_in).split(3)
         else:
-            self.x1[node], self.x2[node], self.msg_down[node] = self.critic[node](state, action, msg_in)
+            self.x1[node], self.x2[node], self.msg_down[node] = self.critic[node](rel_pos, state, action, msg_in)
 
         return self.msg_down[node]
 
