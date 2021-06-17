@@ -22,20 +22,32 @@ class ModularEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         reward = (posafter - posbefore) / self.dt
         reward += alive_bonus
         reward -= 1e-3 * np.square(a).sum()
-        done = False
+        done = not (torso_height > 0.8 and torso_height < 2.0 and
+                    torso_ang > -1.0 and torso_ang < 1.0 and
+                    self.data.site_xpos[0, 2] < 1.6)
         ob = self._get_obs()
         return ob, reward, done, {}
 
     def _get_obs(self):
         
         def _get_obs_per_limb(b):
+            if b == 'torso':
+                limb_type_vec = np.array((1, 0, 0, 0))
+            elif 'thigh' in b:
+                limb_type_vec = np.array((0, 1, 0, 0))
+            elif 'leg' in b:
+                limb_type_vec = np.array((0, 0, 1, 0))
+            elif 'foot' in b:
+                limb_type_vec = np.array((0, 0, 0, 1))
+            else:
+                limb_type_vec = np.array((0, 0, 0, 0))
             torso_x_pos = self.data.get_body_xpos('torso')[0]
             xpos = self.data.get_body_xpos(b)
             xpos[0] -= torso_x_pos
             q = self.data.get_body_xquat(b)
             expmap = quat2expmap(q)
             obs = np.concatenate([xpos, np.clip(self.data.get_body_xvelp(b), -10, 10), \
-                self.data.get_body_xvelr(b), expmap])
+                self.data.get_body_xvelr(b), expmap, limb_type_vec])
             # include current joint angle and joint range as input
             if b == 'torso':
                 angle = 0.

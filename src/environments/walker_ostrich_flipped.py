@@ -47,7 +47,7 @@ class ModularEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             q = self.data.get_body_xquat(b)
             expmap = quat2expmap(q)
             obs = np.concatenate([xpos, np.clip(self.data.get_body_xvelp(b), -10, 10), \
-                self.data.get_body_xvelr(b), expmap])
+                self.data.get_body_xvelr(b), expmap, limb_type_vec])
             # include current joint angle and joint range as input
             if b == 'torso':
                 angle = 0.
