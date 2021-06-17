@@ -92,7 +92,7 @@ class ActorDownAction(nn.Module):
 
 class ActorGraphPolicy(nn.Module):
     """a weight-sharing dynamic graph policy that changes its structure based on different morphologies and passes messages between nodes"""
-    def __init__(self, state_dim, action_dim, msg_dim, batch_size, max_action, max_children, disable_fold, td, bu):
+    def __init__(self, state_dim, action_dim, msg_dim, batch_size, max_action, max_children, disable_fold):
         super(ActorGraphPolicy, self).__init__()
         self.num_limbs = 1
         self.msg_down = [None] * self.num_limbs

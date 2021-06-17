@@ -65,7 +65,7 @@ class CriticDownAction(nn.Module):
 
 class CriticGraphPolicy(nn.Module):
     """a weight-sharing dynamic graph policy that changes its structure based on different morphologies and passes messages between nodes"""
-    def __init__(self, state_dim, action_dim, msg_dim, batch_size, max_children, disable_fold, td, bu):
+    def __init__(self, state_dim, action_dim, msg_dim, batch_size, max_children, disable_fold):
         super(CriticGraphPolicy, self).__init__()
         self.num_limbs = 1
         self.x1 = [None] * self.num_limbs
@@ -90,6 +90,9 @@ class CriticGraphPolicy(nn.Module):
         
         # we pass msg_dim as first argument because in both-way message-passing, each node takes in its passed-up message as 'state'
         self.critic = nn.ModuleList([CriticDownAction(msg_dim, action_dim, msg_dim, max_children)] * self.num_limbs).to(device)
+        if not self.disable_fold:
+                for i in range(self.num_limbs):
+                    setattr(self, "critic" + str(i).zfill(3), self.critic[i])
 
         if not self.disable_fold:
             for i in range(self.max_children):
