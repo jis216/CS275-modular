@@ -7,30 +7,30 @@ import torchfold
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-class ActorVanilla(nn.Module):
-    """a vanilla actor module that outputs a node's action given only its observation (no message between nodes)"""
-    def __init__(self, state_dim, action_dim, max_action):
-        super(ActorVanilla, self).__init__()
-        self.max_action = max_action
-        self.base = MLPBase(state_dim, action_dim)
-
-    def forward(self, x):
-        x = self.max_action * torch.tanh(self.base(x))
-        return x
-
+def relative_pos_encoding(children_pos, cur_pos):
+    relative_pos = children_pos - cur_pos
+    relative_dis = torch.abs(relative_pos)
+    relative_feature = torch.cat([relative_dis, relative_pos, cur_pos, children_pos], dim=-1)
+    return relative_feature
 
 class ActorUp(nn.Module):
     """a bottom-up module used in bothway message passing that only passes message to its parent"""
-    def __init__(self, state_dim, msg_dim, max_children):
+    def __init__(self, state_dim, msg_dim):
         super(ActorUp, self).__init__()
-        self.fc1 = nn.Linear(state_dim, 64)
-        self.fc2 = nn.Linear(64 + msg_dim * max_children, 64)
-        self.fc3 = nn.Linear(64, msg_dim)
+        self.fc1 = nn.Linear(state_dim, 64) # tgt node input message
+        self.fc2 = nn.Linear(64 + msg_dim, 64) # (tgt, src nodes) message
+        self.fc3 = nn.Linear(64, msg_dim) # output
+        self.att_linear = nn.Linear(9 + state_dim, msg_dim)
 
-    def forward(self, x, *m):
-        m = torch.cat(m, dim=-1)
+    def forward(self, x, children_states, *m):
         x = self.fc1(x)
         x = F.normalize(x, dim=-1)
+
+        att = F.softmax(self.att_linear(children_states), dim=-2)
+        m = torch.cat(m, dim=-1)
+        m = m.view((*children_states.shape[:-1], -1))
+        m = (m * att).sum(dim=-2)
+
         xm = torch.cat([x, m], dim=-1)
         xm = torch.tanh(xm)
         xm = self.fc2(xm)
@@ -42,35 +42,6 @@ class ActorUp(nn.Module):
         return msg_up
 
 
-class ActorUpAction(nn.Module):
-    """a bottom-up module used in bottom-up-only message passing that passes message to its parent and outputs action"""
-    def __init__(self, state_dim, msg_dim, max_children, action_dim, max_action):
-        super(ActorUpAction, self).__init__()
-        self.fc1 = nn.Linear(state_dim, 64)
-        self.fc2 = nn.Linear(64 + msg_dim * max_children, 64)
-        self.fc3 = nn.Linear(64, msg_dim)
-        self.action_base = MLPBase(state_dim + msg_dim * max_children, action_dim)
-        self.max_action = max_action
-
-    def forward(self, x, *m):
-        m = torch.cat(m, dim=-1)
-        xm = torch.cat((x, m), dim=-1)
-        xm = torch.tanh(xm)
-        action = self.max_action * torch.tanh(self.action_base(xm))
-
-        x = self.fc1(x)
-        x = F.normalize(x, dim=-1)
-        xm = torch.cat([x, m], dim=-1)
-        xm = torch.tanh(xm)
-        xm = self.fc2(xm)
-        xm = torch.tanh(xm)
-        xm = self.fc3(xm)
-        xm = F.normalize(xm, dim=-1)
-        msg_up = xm
-
-        return msg_up, action
-
-
 class ActorDownAction(nn.Module):
     """a top-down module used in bothway message passing that passes messages to children and outputs action"""
     # input dim is state dim if only using top down message passing
@@ -78,21 +49,24 @@ class ActorDownAction(nn.Module):
     def __init__(self, self_input_dim, action_dim, msg_dim, max_action, max_children):
         super(ActorDownAction, self).__init__()
         self.max_action = max_action
-        self.action_base = MLPBase(self_input_dim + msg_dim, action_dim)
-        self.msg_base = MLPBase(self_input_dim + msg_dim, msg_dim * max_children)
+        self.action_base = MLPBase(12 + self_input_dim + msg_dim, action_dim)
+        self.msg_base = MLPBase(12 + self_input_dim + msg_dim, msg_dim * max_children)
 
-    def forward(self, x, m):
-        xm = torch.cat((x, m), dim=-1)
+    def forward(self, rel_pos, x, m):
+        xm = torch.cat((rel_pos, x, m), dim=-1)
         xm = torch.tanh(xm)
         action = self.max_action * torch.tanh(self.action_base(xm))
         msg_down = self.msg_base(xm)
         msg_down = F.normalize(msg_down, dim=-1)
         return action, msg_down
 
+'''
+    parents: parent indices of pre-ordered limbs, thus children will have the same index.
+'''
 
 class ActorGraphPolicy(nn.Module):
     """a weight-sharing dynamic graph policy that changes its structure based on different morphologies and passes messages between nodes"""
-    def __init__(self, state_dim, action_dim, msg_dim, batch_size, max_action, max_children, disable_fold, td, bu):
+    def __init__(self, state_dim, action_dim, msg_dim, batch_size, max_action, max_children, disable_fold):
         super(ActorGraphPolicy, self).__init__()
         self.num_limbs = 1
         self.msg_down = [None] * self.num_limbs
@@ -109,14 +83,15 @@ class ActorGraphPolicy(nn.Module):
 
         assert self.action_dim == 1
         
-        self.sNet = nn.ModuleList([ActorUp(state_dim, msg_dim, max_children)] * self.num_limbs).to(device)
-
+        # The same ActorUp network got shallow-copied
+        self.sNet = nn.ModuleList([ActorUp(state_dim, msg_dim)] * self.num_limbs).to(device)
         if not self.disable_fold:
             for i in range(self.num_limbs):
                 setattr(self, "sNet" + str(i).zfill(3), self.sNet[i])
+
+        # The same ActorDownAction network got shallow-copied
         # we pass msg_dim as first argument because in both-way message-passing, each node takes in its passed-up message as 'state'
         self.actor = nn.ModuleList([ActorDownAction(msg_dim, action_dim, msg_dim, max_action, max_children)] * self.num_limbs).to(device)
-            
         if not self.disable_fold:
             for i in range(self.num_limbs):
                 setattr(self, "actor" + str(i).zfill(3), self.actor[i])
@@ -151,6 +126,7 @@ class ActorGraphPolicy(nn.Module):
         for i in range(self.num_limbs):
             self.top_down_transmission(i)
 
+
         if not self.disable_fold:
             self.a += self.action
             self.action = self.fold.apply(self, [self.a])[0]
@@ -177,18 +153,38 @@ class ActorGraphPolicy(nn.Module):
             return self.msg_up[node]
 
         state = self.input_state[node]
+        cur_pos, _ = state.split([3, state.shape[-1] - 3], dim=-1)
 
+        # children indices --> not efficient
         children = [i for i, x in enumerate(self.parents) if x == node]
         assert (self.max_children - len(children)) >= 0
         children += [-1] * (self.max_children - len(children))
         msg_in = [None] * self.max_children
+        children_states = [None] * self.max_children
+
+
         for i in range(self.max_children):
+            # children[i] = children node idx
+            if children[i] == -1:
+                children_states[i] = torch.zeros((*cur_pos.shape[:-1], 9 + state.shape[-1])).to(device)
+            else:
+                child_state = self.input_state[children[i]]
+                children_pos, children_f  = child_state.split([3, child_state.shape[-1] - 3], dim=-1)
+
+                rel_pos = relative_pos_encoding(children_pos, cur_pos)
+
+                children_states[i] = torch.cat((rel_pos, children_f), dim=-1)
+            
+
             msg_in[i] = self.bottom_up_transmission(children[i])
 
+        children_states = torch.cat(children_states, dim=-1)
+        children_states = children_states.view(*children_states.shape[:-1], self.max_children, -1)
+
         if not self.disable_fold:
-            self.msg_up[node] = self.fold.add('sNet' + str(0).zfill(3), state, *msg_in)
+            self.msg_up[node] = self.fold.add('sNet' + str(0).zfill(3), state, children_states, *msg_in)
         else:
-            self.msg_up[node] = self.sNet[node](state, *msg_in)
+            self.msg_up[node] = self.sNet[node](state, children_states, *msg_in)
 
         return self.msg_up[node]
 
@@ -202,8 +198,16 @@ class ActorGraphPolicy(nn.Module):
         elif self.msg_down[node] is not None:
             return self.msg_down[node]
 
+        child_state = self.input_state[node]
+        children_pos, _  = child_state.split([3, child_state.shape[-1] - 3], dim=-1)
+        parent_state = self.input_state[self.parents[node]]
+        parent_pos, _  = parent_state.split([3, parent_state.shape[-1] - 3], dim=-1)
+
+        rel_pos = relative_pos_encoding(children_pos, parent_pos)
+
         # in both-way message-passing, each node takes in its passed-up message as 'state'
         state = self.msg_up[node]
+            
         parent_msg = self.top_down_transmission(self.parents[node])
 
         # find self children index (first child of parent, second child of parent, etc)
@@ -211,19 +215,18 @@ class ActorGraphPolicy(nn.Module):
         self_children_idx = self.parents[:node].count(self.parents[node])
 
         # if the structure is flipped, flip message order at the root
-        if self.parents[0] == -2 and (node == 1 or node == 4):
-            real_children_num = 2
-            self_children_idx = (real_children_num - 1) - self_children_idx
+        if self.parents[0] == -2 and node == 1:
+            self_children_idx = (self.max_children - 1) - self_children_idx # flip node indices
 
         if not self.disable_fold:
             msg_in = self.fold.add('get_{}'.format(self_children_idx), parent_msg)
         else:
             msg_in = self.msg_slice(parent_msg, self_children_idx)
-
+                
         if not self.disable_fold:
-            self.action[node], self.msg_down[node] = self.fold.add('actor' + str(0).zfill(3), state, msg_in).split(2)
+            self.action[node], self.msg_down[node] = self.fold.add('actor' + str(0).zfill(3), rel_pos, state, msg_in).split(2)
         else:
-            self.action[node], self.msg_down[node] = self.actor[node](state, msg_in)
+            self.action[node], self.msg_down[node] = self.actor[node](rel_pos, state, msg_in)
 
         return self.msg_down[node]
 
@@ -255,13 +258,13 @@ class ActorGraphPolicy(nn.Module):
         if not self.disable_fold:
             for i in range(1, self.num_limbs):
                 delattr(self, "sNet" + str(i).zfill(3))
-                    
         self.parents = parents
         self.num_limbs = len(parents)
         self.msg_down = [None] * self.num_limbs
         self.msg_up = [None] * self.num_limbs
         self.action = [None] * self.num_limbs
         self.input_state = [None] * self.num_limbs
+
         self.sNet = nn.ModuleList([self.sNet[0]] * self.num_limbs)
         if not self.disable_fold:
             for i in range(self.num_limbs):

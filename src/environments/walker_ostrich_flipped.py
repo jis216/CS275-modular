@@ -22,9 +22,11 @@ class ModularEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         reward = (posafter - posbefore) / self.dt
         reward += alive_bonus
         reward -= 1e-3 * np.square(a).sum()
+
         done = not (torso_height > 0.8 and torso_height < 2.0 and
                     torso_ang > -1.0 and torso_ang < 1.0 and
                     self.data.site_xpos[0, 2] > 1.1)
+        
         ob = self._get_obs()
         return ob, reward, done, {}
 
@@ -46,6 +48,7 @@ class ModularEnv(mujoco_env.MujocoEnv, utils.EzPickle):
             xpos[0] -= torso_x_pos
             q = self.data.get_body_xquat(b)
             expmap = quat2expmap(q)
+
             obs = np.concatenate([xpos, np.clip(self.data.get_body_xvelp(b), -10, 10), \
                 self.data.get_body_xvelr(b), expmap, limb_type_vec])
             # include current joint angle and joint range as input
@@ -54,6 +57,7 @@ class ModularEnv(mujoco_env.MujocoEnv, utils.EzPickle):
                 joint_range = [0., 0.]
             else:
                 body_id = self.sim.model.body_name2id(b)
+
                 jnt_adr = self.sim.model.body_jntadr[body_id]
                 qpos_adr = self.sim.model.jnt_qposadr[jnt_adr] # assuming each body has only one joint
                 angle = np.degrees(self.data.qpos[qpos_adr]) # angle of current joint, scalar
@@ -62,6 +66,7 @@ class ModularEnv(mujoco_env.MujocoEnv, utils.EzPickle):
                 angle = (angle - joint_range[0]) / (joint_range[1] - joint_range[0])
                 joint_range[0] = (180. + joint_range[0]) / 360.
                 joint_range[1] = (180. + joint_range[1]) / 360.
+
             obs = np.concatenate([obs, [angle], joint_range])
             return obs
 

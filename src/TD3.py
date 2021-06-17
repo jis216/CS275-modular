@@ -2,32 +2,35 @@
 from __future__ import print_function
 import torch
 import torch.nn.functional as F
-from ModularActor import ActorGraphPolicy
-from ModularCritic import CriticGraphPolicy
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
 class TD3(object):
 
     def __init__(self, args):
+        if args.use_att:
+            from AttModularActor import ActorGraphPolicy
+            from AttModularCritic import CriticGraphPolicy
+        else:
+            from ModularActor import ActorGraphPolicy
+            from ModularCritic import CriticGraphPolicy
 
         self.args = args
         self.actor = ActorGraphPolicy(args.limb_obs_size, 1,
                                       args.msg_dim, args.batch_size,
                                       args.max_action, args.max_children,
-                                      args.disable_fold, args.td, args.bu).to(device)
+                                      args.disable_fold).to(device)
         self.actor_target = ActorGraphPolicy(args.limb_obs_size, 1,
                                              args.msg_dim, args.batch_size,
                                              args.max_action, args.max_children,
-                                             args.disable_fold, args.td, args.bu).to(device)
+                                             args.disable_fold).to(device)
         self.critic = CriticGraphPolicy(args.limb_obs_size, 1,
                                         args.msg_dim, args.batch_size,
-                                        args.max_children, args.disable_fold,
-                                        args.td, args.bu).to(device)
+                                        args.max_children, args.disable_fold).to(device)
         self.critic_target = CriticGraphPolicy(args.limb_obs_size, 1,
                                                args.msg_dim, args.batch_size,
-                                               args.max_children, args.disable_fold,
-                                               args.td, args.bu).to(device)
+                                               args.max_children, args.disable_fold).to(device)
         self.actor_target.load_state_dict(self.actor.state_dict())
         self.critic_target.load_state_dict(self.critic.state_dict())
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=args.lr)
