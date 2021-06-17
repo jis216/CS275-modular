@@ -82,7 +82,13 @@ def load_checkpoint(checkpoint_path, rb_path, policy, args):
 
 
 def load_model_only(exp_path, policy):
-    model_path = os.path.join(exp_path, 'model.pyth')
+    
+    nums = []
+    for file in os.listdir(exp_path):
+        if file.endswith(".pyth"):
+            nums += [float(file[7:-6])]
+
+    model_path = os.path.join(exp_path, f'model_{max(nums)}M.pyth')
     if not os.path.exists(model_path):
         raise FileNotFoundError('no model file found')
     print('*** using model {} ***'.format(model_path))
