@@ -9,6 +9,7 @@ def has_checkpoint(checkpoint_path, rb_path):
     """check if a checkpoint exists"""
     if not (os.path.exists(checkpoint_path) and os.path.exists(rb_path)):
         return False
+    model_exist=False
     for file in os.listdir(checkpoint_path):
         if file.endswith(".pyth"):
             model_exist = True
