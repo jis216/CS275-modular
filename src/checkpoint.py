@@ -52,7 +52,7 @@ def load_checkpoint(checkpoint_path, rb_path, policy, args):
     nums = []
     for file in os.listdir(checkpoint_path):
         if file.endswith(".pyth"):
-            nums += [float(file[7:-6])]
+            nums += [float(file[6:-6])]
 
     fpath = os.path.join(checkpoint_path, f'model_{max(nums)}M.pyth')
     checkpoint = torch.load(fpath, map_location='cpu')
@@ -87,11 +87,10 @@ def load_checkpoint(checkpoint_path, rb_path, policy, args):
 
 
 def load_model_only(exp_path, policy):
-    
     nums = []
     for file in os.listdir(exp_path):
         if file.endswith(".pyth"):
-            nums += [float(file[7:-6])]
+            nums += [float(file[6:-6])]
 
     model_path = os.path.join(exp_path, f'model_{max(nums)}M.pyth')
     if not os.path.exists(model_path):
