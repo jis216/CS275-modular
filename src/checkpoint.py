@@ -49,7 +49,12 @@ def save_replay_buffer(rb_path, replay_buffer):
 
 
 def load_checkpoint(checkpoint_path, rb_path, policy, args):
-    fpath = os.path.join(checkpoint_path, 'model.pyth')
+    nums = []
+    for file in os.listdir(checkpoint_path):
+        if file.endswith(".pyth"):
+            nums += [float(file[7:-6])]
+
+    fpath = os.path.join(checkpoint_path, f'model_{max(nums)}M.pyth')
     checkpoint = torch.load(fpath, map_location='cpu')
     # change to default graph before loading
     policy.change_morphology([-1])
