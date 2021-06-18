@@ -3,8 +3,6 @@
 
 Jiayue Sun, Yingge He, Qinglu Zhang
 
-<img src="images/teaser.gif" width="700">
-
 ## Setup
 ### Requirements
 - Python-3.6
