@@ -1,25 +1,7 @@
-## One Policy to Control Them All:<br/>Shared Modular Policies for Agent-Agnostic Control ##
-### ICML 2020
-#### [[Project Page]](https://huangwl18.github.io/modular-rl/) [[Paper]](https://www.cs.cmu.edu/~dpathak/papers/modular-rl.pdf) [[Demo Video]](https://youtu.be/9YiZZ_8guq8) [[Long Oral Talk]](https://youtu.be/gEeQ0nzalzo)
+## CS275 Final Report: Explore Generalizable Policy ##
+#### [[Project Page]](https://sites.google.com/g.ucla.edu/cs275-modular/home?authuser=1) [[Overleaf]](https://www.overleaf.com/project/60cb0c9cc6c2bc12562c3481)
 
-[Wenlong Huang](https://wenlong.page)<sup>1</sup>, [Igor Mordatch](https://scholar.google.com/citations?user=Vzr1RukAAAAJ&hl=en)<sup>2</sup>, [Deepak Pathak](https://www.cs.cmu.edu/~dpathak/)<sup>3 4</sup>
-
-<sup>1</sup>University of California, Berkeley, <sup>2</sup>Google Brain, <sup>3</sup>Facebook AI Research, <sup>4</sup>Carnegie Mellon University<br/>
-
-<img src="images/teaser.gif" width="700">
-
-This is a PyTorch-based implementation of our [Shared Modular Policies](https://huangwl18.github.io/modular-rl/). We take a step beyond the laborious training process of the conventional single-agent RL policy by tackling the possibility of learning general-purpose controllers for diverse robotic systems. Our approach trains a single policy for a wide variety of agents which can then generalize to unseen agent shapes at test-time without any further training.
-
-If you find this work useful in your research, please cite using the following BibTeX:
-
-    @inproceedings{huang2020smp,
-      Author = {Huang, Wenlong and
-      Mordatch, Igor and Pathak, Deepak},
-      Title = {One Policy to Control Them All:
-      Shared Modular Policies for Agent-Agnostic Control},
-      Booktitle = {ICML},
-      Year = {2020}
-      }
+Jiayue Sun, Yingge He, Qinglu Zhang
 
 ## Setup
 ### Requirements
@@ -55,14 +37,6 @@ If you find this work useful in your research, please cite using the following B
 - Train both-way SMP on ``Walker++`` (12 variants of walker):
 ```Shell
 python main.py --expID 001 --morphologies walker
-  ```
-- Train both-way SMP on ``Humanoid++`` (8 variants of 2d humanoid):
-```Shell
-python main.py --expID 002 --morphologies humanoid
-  ```
-- Train both-way SMP on ``Cheetah++`` (15 variants of cheetah):
-```Shell
-python main.py --expID 003 --morphologies cheetah
   ```
 - Train both-way SMP on ``Hopper++`` (3 variants of hopper):
 ```Shell
