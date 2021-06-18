@@ -19,7 +19,7 @@ def extract(args):
         tags = event_acc.Tags()['scalars']
         data = []
         for t in tags:
-            if args.tag in t:
+            if 'episode_reward' in t:
                 w_times, steps, vals = zip(*event_acc.Scalars(t))
                 data.append(np.vstack([steps, vals]))
         # data shape: [agents #, (steps, vals), steps #]
