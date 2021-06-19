@@ -41,6 +41,7 @@
 		.side-list { text-align: center; list-style-type: none;}
 		.side-list li {display: inline-block; padding: 0 20px 0 20px ;}
 		table.tb-padding td {padding: 0 10px 0 10px ;}
+		.div-padding {padding: 10px 0 10px 0;}
 	</style>
 	</head>
 	<body>
@@ -52,25 +53,24 @@
 			<div class="top-menu">
 				<div class="container">
 					<div class="row">
-						<div class="col-md-2">
-							<div id="colorlib-logo"><a href="/">Text classification</a></div>
+						<div class="col-md-12 col-md-offset-2">
+							<div id="colorlib-logo"><a href="/" style="font-size: 48px;">Explore Generalizable Policy</a></div>
 						</div>
 					</div>
 				</div>
 			</div>
 		</nav>
 
-		<section id="home" class="video-hero" style="height: 150px; background-image: url(static/images/cover_img_1.jpg);  background-size:cover; background-position: center center;background-attachment:fixed;" data-section="home">
+		<section id="home" class="video-hero" style="height: 120px; background-image: url(static/images/cover_img_1.jpg);  background-size:cover; background-position: center center;background-attachment:fixed;" data-section="home">
 		<div class="overlay" style="background: rgba(0,0,0,0.97)"></div>
-			
 		</section>
-
-		<div class="colorlib-intro">
-			<div class="container">
-				<div class="row">
-					<div class="col-md-12 text-center colorlib-heading animate-box">
-						<h2>Explore Generalizable Policy</h2>
-						
+		<div class='container'>
+			<div class="row">
+				<div class="col-md-12 text-center colorlib-heading animate-box">
+					<div class="div-padding">
+						<img src="images/teaser.gif">
+					</div>
+					<div class="div-padding">
 						<ul class="side-list">
 							<li>Yingge He</li>
 							<li>Jiayue Sun</li>
@@ -78,37 +78,36 @@
 						</ul>
 						<ul class="side-list">
 							<li><a href="https://github.com/jis216/CS275-modular">Github Code</a></li>
+							<li><a href="src/">Local Code</a></li>
 							<li><a href="https://drive.google.com/file/d/1D6P96OfpEtbo5i3hcMkvn0X-KzrpbxxL/view?usp=sharing">Final Report</a></li>
 						</ul>
-						<img src="images/teaser.gif">
 					</div>
-				</div>
-				<div class="row">
-					<div class="col-md-12 text-center colorlib-heading animate-box">
+					<div class="col-md-8 col-md-offset-2 text-center colorlib-heading animate-box">
 						<iframe src="https://drive.google.com/file/d/1D6P96OfpEtbo5i3hcMkvn0X-KzrpbxxL/preview" width="640" height="480" allow="autoplay"></iframe>
 					</div>
 				</div>
-				
-				</br>
 			</div>
-			<div class="container">
-				<div class="row">
-					<div class="col-md-8 col-md-offset-2 text-center colorlib-heading animate-box">
-						<h3>Abstract</h3>
-						<p>Reinforcement learning has been considered as learning of control policy to generate a set of actions for a specific agent. 
-							Our goal is to discover a more generalizable architecture that can be used in wide-range environments to maximize the shared utility 
-							and improve efficiency. The idea of Shared Modular Policies(SMP) attempts to control outputs of all agents with only one single policy 
-							architecture.  Our intuition in this article is to explore that if we can generally and feasibly apply this approach on different 
-							models which are more complex and much similar to real-life creatures. 
-							To achieve our purpose, we extend the SMP and derive different environments to evaluate the performance of our new architecture.</p>
-					</div>
+		</div>
+
+		<div class="container">
+			<div class="row">
+				<div class="col-md-8 col-md-offset-2 text-center colorlib-heading animate-box">
+					<h3>Abstract</h3>
+					<p>Reinforcement learning has been considered as learning of control policy to generate a set of actions for a specific agent. 
+						Our goal is to discover a more generalizable architecture that can be used in wide-range environments to maximize the shared utility 
+						and improve efficiency. The idea of Shared Modular Policies(SMP) attempts to control outputs of all agents with only one single policy 
+						architecture.  Our intuition in this article is to explore that if we can generally and feasibly apply this approach on different 
+						models which are more complex and much similar to real-life creatures. 
+						To achieve our purpose, we extend the SMP and derive different environments to evaluate the performance of our new architecture.</p>
 				</div>
-				<div class="row">
-					<div class="col-md-8 col-md-offset-2 text-center colorlib-heading animate-box">
-						<h3>Environments</h3>
-						<p>Experiments on training agents of different morphologies</p>
-						<div>
-							<div class='row'>
+			</div>
+			<div class="row">
+				<div class="col-md-8 col-md-offset-2 text-center colorlib-heading animate-box">
+					<h3>Environments</h3>
+					<p>Experiments on training agents of different morphologies</p>
+					<div>
+						<div class='row'>
+							<div class="col-md-6 text-center animate-box"></div>
 								<table>
 									<tbody>
 										<tr>
@@ -133,65 +132,89 @@
 									</tbody>
 								</table>
 							</div>
-							
-							<div class='row'>
-								<div class="col-md-6 text-center animate-box">
-									<table class='tb-padding'>
-										<tbody>
-											<tr>
-												<td align="center" style="text-align:center" colspan=3><b>Hopper</b></td>
-											</tr>
-											<tr>
-												<td align="center" style="text-align:center"><img src="images/all-envs-jpg/hopper_3.jpg" width="80"><br>hopper_3</td>
-												<td align="center" style="text-align:center"><img src="images/all-envs-jpg/hopper_4.jpg" width="80"><br>hopper_4</td>
-												<td align="center" style="text-align:center"><img src="images/all-envs-jpg/hopper_5.jpg" width="80"><br>hopper_5</td>
-											</tr>
-										</tbody>
-									</table>
-								</div>
-								<div class="col-md-6 text-center animate-box"></div>
-									<table class='tb-padding'>
-										<tbody>
-											<tr>
-												<td align="center" style="text-align:center" colspan=2><b>Animals</b></td>
-											</tr>
-											<tr>
-												<td align="center" style="text-align:center"><img src="images/ostrich.png" width="160"><br>ostrich</td>
-												<td align="center" style="text-align:center"><img src="images/kangaroo.png" width="160"><br>kangaroo</td>
-											</tr>
-										</tbody>
-									</table>
-								</div>
-							</div>	
 						</div>
+						
+						<div class='row animate-box'>
+							<div class="col-md-6 text-center">
+								<table class='tb-padding'>
+									<tbody>
+										<tr>
+											<td align="center" style="text-align:center" colspan=3><b>Hopper</b></td>
+										</tr>
+										<tr>
+											<td align="center" style="text-align:center"><img src="images/all-envs-jpg/hopper_3.jpg" width="80"><br>hopper_3</td>
+											<td align="center" style="text-align:center"><img src="images/all-envs-jpg/hopper_4.jpg" width="80"><br>hopper_4</td>
+											<td align="center" style="text-align:center"><img src="images/all-envs-jpg/hopper_5.jpg" width="80"><br>hopper_5</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+							<div class="col-md-6 text-center"></div>
+								<table class='tb-padding'>
+									<tbody>
+										<tr>
+											<td align="center" style="text-align:center" colspan=2><b>Animals</b></td>
+										</tr>
+										<tr>
+											<td align="center" style="text-align:center"><img src="images/ostrich.png" width="160"><br>ostrich</td>
+											<td align="center" style="text-align:center"><img src="images/kangaroo.png" width="160"><br>kangaroo</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>	
 					</div>
 				</div>
-				</br>
-				<div class="row">
-					<div class="col-md-8 col-md-offset-2 text-center colorlib-heading animate-box">
-						<h3>Demonstration Videos</h3>
-						<p>Results after training for 3M time steps on selection of hoppers, walkers and animals. </p>
-						<div class="col-md-6 animate-box">
-							<article>
-								<h4><a href="#">SMP-attention</a></h4>
-								<p>Training hopper 3 and 4 (no flipping) + walker 5 and 7 (no flipping) + ostrich and kangaroo (no flipping)</p>
-							</article>
-						</div>
-						<div class="col-md-6 animate-box">
-							<article>
-								<h4><a href="#">SMP-attention</a></h4>
-								<p>Training hopper 3 and 4 (no flipping) + walker 5 and 7 (no flipping) + ostrich and kangaroo (no flipping)</p>
-							</article>
-						</div>
-						<div class="col-md-6 animate-box">
-							<article>
-								<h4><a href="#">SMP-attention</a></h4>
-								<p>Training hopper 3 and 4 (no flipping) + walker 5 and 7 (no flipping) + ostrich and kangaroo (no flipping)</p>
-							</article>
-						</div>
+			</div>
+			</br>
+			<div class="row">
+				<div class="col-md-8 col-md-offset-2 text-center colorlib-heading animate-box">
+					<h3>Results Demonstration</h3>
+					<p>Results after training for 3M time steps on selection of hoppers, walkers and animals. </p>
+					<div class="col-md-6 animate-box">
+						<article>
+							<h4><a href="#">SMP-vanilla</a></h4>
+							<p>Training hopper 3 and 4 (no flipping) + walker 5 and 7 (no flipping) + ostrich and kangaroo (no flipping)</p>
+							<video width="320" height="240"  loop autoplay muted>
+								<source src="videos/vanilla_hopper.mp4" type="video/mp4">
+							</video>
+							<video width="320" height="240"  loop autoplay muted>
+								<source src="videos/vanilla_walker.mp4" type="video/mp4">
+							</video>
+							<video width="320" height="240"  loop autoplay muted>
+								<source src="videos/vanilla_kangaroo.mp4" type="video/mp4">
+							</video>
+							<video width="320" height="240" autoplay loop muted>
+								<source src="videos/vanilla_ostrich.mp4" type="video/mp4">
+							</video>
+						</article>
 					</div>
-					
+					<div class="col-md-6 animate-box">
+						<article>
+							<h4><a href="#">SMP-attention</a></h4>
+							<p>Training hopper 3 and 4 (no flipping) + walker 5 and 7 (no flipping) + ostrich and kangaroo (no flipping)</p>
+							<video width="320" height="240" loop  autoplay muted>
+								<source src="videos/att_hopper.mp4" type="video/mp4">
+							</video>
+							<video width="320" height="240" loop  autoplay muted>
+								<source src="videos/att_walker.mp4" type="video/mp4">
+							</video>
+							<video width="320" height="240" loop  autoplay muted>
+								<source src="videos/att_kangaroo.mp4" type="video/mp4">
+							</video>
+							<video width="320" height="240"  loop autoplay muted>
+								<source src="videos/att_ostrich.mp4" type="video/mp4">
+							</video>
+						</article>
+					</div>
+					<div class="col-md-6 animate-box">
+						<article>
+							<h4><a href="#">SMP-attention</a></h4>
+							<p>Training hopper 3 and 4 (no flipping) + walker 5 and 7 (no flipping) + ostrich and kangaroo (no flipping)</p>
+						</article>
+					</div>
 				</div>
+				
 			</div>
 		</div>
 		
