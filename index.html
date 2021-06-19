@@ -94,11 +94,11 @@
 				<div class="col-md-8 col-md-offset-2 text-center colorlib-heading animate-box">
 					<h3>Abstract</h3>
 					<p>Reinforcement learning has been considered as learning of control policy to generate a set of actions for a specific agent. 
-						Our goal is to discover a more generalizable architecture that can be used in wide-range environments to maximize the shared utility 
-						and improve efficiency. The idea of Shared Modular Policies(SMP) attempts to control outputs of all agents with only one single policy 
-						architecture.  Our intuition in this article is to explore that if we can generally and feasibly apply this approach on different 
-						models which are more complex and much similar to real-life creatures. 
-						To achieve our purpose, we extend the SMP and derive different environments to evaluate the performance of our new architecture.</p>
+						Our goal is to discover a more generalizable policy that can be used to control agents with diverse body structures and attributes.
+						In this project, we conduct more experiments on a previous method Shared Modular Policies(SMP), a message passing network that 
+						attempts to control all agents with a single policy, and explore whether it can be applied to models which are more complex and much similar to real-life creatures. 
+						We have also extended the SMP method with relative position encoding and attention mechanism. This extension is evaluated on various sets of environments and 
+						and compared with the original baseline.</p>
 				</div>
 			</div>
 			<div class="row">
@@ -212,7 +212,7 @@
 							<h4><a href="#">Generalizability of Body Attributes</a></h4>
 							<p>Hopper 3 w/ different body lengths</p>
 							<div class="row">
-								<div class="col-md-8">
+								<div class="col-md-8 text-center">
 									<p>Trained Environments</p>
 									<video width="320" height="240" loop  autoplay muted>
 										<source src="videos/hopper/hopper_3_main.mp4" type="video/mp4">
@@ -227,8 +227,8 @@
 										<source src="videos/hopper/hopper_3_torso.mp4" type="video/mp4">
 									</video>
 								</div>
-								<div class="col-md-2">
-									<p>Zero-shot Test Environments</p>
+								<div class="col-md-4 text-center">
+									<p>Zero-shot Test Env</p>
 									<video width="320" height="240" loop  autoplay muted>
 									<source src="videos/hopper/hopper_3_main.mp4" type="video/mp4">
 									</video>
