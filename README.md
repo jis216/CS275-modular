@@ -45,18 +45,13 @@ python main.py --expID 004 --morphologies hopper
   - To train both-way SMP for only one environment (e.g. ``walker_7_main``), specify the full name of  the environment without the ``.xml`` suffix:
 ```Shell
 python main.py --expID 005 --morphologies walker_7_main
-  ```
+```
 
-### Train with custom environment
-- Train both-way SMP for only one environment:
+### Train with predefined agent group environment
+- Agent group 2:
 ```Shell
-python main.py --expID 006 --custom_xml <PATH_TO_XML_FILE>
-  ```
-- Train both-way SMP for multiple environments (``xml`` files must be in the same directory):
-```Shell
-python main.py --expID 007 --custom_xml <PATH_TO_XML_DIR>
-  ```
-Note that the current implementation assumes all custom MuJoCo agents are 2D planar and contain only one ``body`` tag with name ``torso`` attached to ``worldbody``.
+./
+```
 
 ### Visualization
 - To visualize all ``walker`` environments with the both-way SMP model from experiment ``expID 001``:
