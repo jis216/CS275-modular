@@ -89,57 +89,6 @@ python visualize.py --expID 001 --morphologies walker_7_main
     </tbody>
 </table>
 
-
-<table>
-    <tbody>
-        <tr>
-            <td align="center" style="text-align:center" colspan=4><b>2D Humanoid</b></td>
-        </tr>
-        <tr>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/humanoid_2d_7_left_arm.jpg" width="80"><br>humanoid_2d_7_left_arm</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/humanoid_2d_7_left_leg.jpg" width="80"><br>humanoid_2d_7_left_leg</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/humanoid_2d_7_lower_arms.jpg" width="80"><br>humanoid_2d_7_lower_arms</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/humanoid_2d_7_right_arm.jpg" width="80"><br>humanoid_2d_7_right_arm</td>
-        </tr>
-        <tr>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/humanoid_2d_7_right_leg.jpg" width="80"><br>humanoid_2d_7_right_leg</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/humanoid_2d_8_left_knee.jpg" width="80"><br>humanoid_2d_8_left_knee</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/humanoid_2d_8_right_knee.jpg" width="80"><br>humanoid_2d_8_right_knee</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/humanoid_2d_9_full.jpg" width="80"><br>humanoid_2d_9_full</td>
-        </tr>
-    </tbody>
-</table>
-
-
-<table>
-    <tbody>
-        <tr>
-            <td align="center" style="text-align:center" colspan=5><b>Cheetah</b></td>
-        </tr>
-        <tr>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/cheetah_2_back.jpg" width="80"><br>cheetah_2_back</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/cheetah_2_front.jpg" width="80"><br>cheetah_2_front</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/cheetah_3_back.jpg" width="80"><br>cheetah_3_back</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/cheetah_3_balanced.jpg" width="80"><br>cheetah_3_balanced</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/cheetah_3_front.jpg" width="80"><br>cheetah_3_front</td>
-        </tr>
-        <tr>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/cheetah_4_allback.jpg" width="80"><br>cheetah_4_allback</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/cheetah_4_allfront.jpg" width="80"><br>cheetah_4_allfront</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/cheetah_4_back.jpg" width="80"><br>cheetah_4_back</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/cheetah_4_front.jpg" width="80"><br>cheetah_4_front</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/cheetah_5_back.jpg" width="80"><br>cheetah_5_back</td>
-        </tr>
-        <tr>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/cheetah_5_balanced.jpg" width="80"><br>cheetah_5_balanced</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/cheetah_5_front.jpg" width="80"><br>cheetah_5_front</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/cheetah_6_back.jpg" width="80"><br>cheetah_6_back</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/cheetah_6_front.jpg" width="80"><br>cheetah_6_front</td>
-            <td align="center" style="text-align:center"><img src="images/all-envs-jpg/cheetah_7_full.jpg" width="80"><br>cheetah_7_full</td>
-        </tr>
-    </tbody>
-</table>
-
 <table>
     <tbody>
         <tr>
